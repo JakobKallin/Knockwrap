@@ -85,4 +85,27 @@ describe('Knockwrap', function() {
 		viewModel.name = 'James';
 		expect(node.textContent).toBe('James');
 	});
+	
+	it('handles array binding with simple values', function() {
+		var viewModel = {
+			names: ['John', 'James', 'Robert']
+		};
+		knockwrap.wrap(viewModel);
+		
+		var listNode = document.createElement('ul');
+		listNode.dataset.bind = 'foreach: names';
+		
+		var itemNode = document.createElement('li');
+		// This binds to the strings themselves, not properties of them.
+		itemNode.dataset.bind = 'text: $data';
+		listNode.appendChild(itemNode);
+		
+		container.appendChild(listNode);
+		ko.applyBindings(viewModel, listNode);
+		
+		var generatedNodes = listNode.getElementsByTagName('li');
+		expect(generatedNodes[0].textContent).toBe('John');
+		expect(generatedNodes[1].textContent).toBe('James');
+		expect(generatedNodes[2].textContent).toBe('Robert');
+	});
 });
