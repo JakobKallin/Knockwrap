@@ -13,27 +13,34 @@ knockwrap = function() {
 		}
 	}
 	
-	var mutatingArrayMethods = ['pop', 'push', 'reverse', 'shift', 'splice', 'sort', 'unshift'];
-	
 	function wrapArray(target, property) {
 		var array = target[property];
 		var observable = ko.observableArray(array);
 		var wrapper = Object.create(array);
 		target[property] = wrapper;
 		
+		setUpDependency(observable, wrapper);
+		
+		// Recursively wrap array values so changes are notified when array indexes are reassigned.
+		wrapper.forEach(function(value, index) {
+			wrapProperty(array, index);
+		});
+		
+		wrapMutatingArrayMethods(array, observable, wrapper);
+	}
+	
+	function setUpDependency(observable, wrapper) {
 		// We do this to set up a dependency. How can it be done in a nicer way?
 		Object.defineProperty(wrapper, 'length', {
 			get: function() {
 				return observable().length;
 			}
 		});
-		
-		// Recursively wrap array values so changes are notified when array indexes are reassigned.
-		array.forEach(function(value, index) {
-			wrapProperty(array, index);
-		});
-		
-		// These methods mutate the array and so need to trigger notifications.
+	}
+	
+	// These methods mutate the array and so need to trigger notifications.
+	var mutatingArrayMethods = ['pop', 'push', 'reverse', 'shift', 'splice', 'sort', 'unshift'];
+	function wrapMutatingArrayMethods(array, observable, wrapper) {
 		mutatingArrayMethods.forEach(function(methodName) {
 			var originalMethod = array[methodName];
 			wrapper[methodName] = function() {
