@@ -62,12 +62,10 @@ describe('Knockwrap', function() {
 		};
 		knockwrap.wrap(viewModel);
 		
-		var node = document.createElement('div');
-		node.dataset.bind = 'text: name';
-		container.appendChild(node);
-		ko.applyBindings(viewModel, node);
+		container.innerHTML = '<div data-bind="text: name"></div>';
+		ko.applyBindings(viewModel, container);
 		
-		expect(node.textContent).toBe('John');
+		expect(container.textContent).toBe('John');
 	});
 	
 	it('handles simple value binding with change event', function() {
@@ -76,14 +74,12 @@ describe('Knockwrap', function() {
 		};
 		knockwrap.wrap(viewModel);
 		
-		var node = document.createElement('div');
-		node.dataset.bind = 'text: name';
-		container.appendChild(node);
-		ko.applyBindings(viewModel, node);
+		container.innerHTML = '<div data-bind="text: name"></div>';
+		ko.applyBindings(viewModel, container);
 		
-		expect(node.textContent).toBe('John');
+		expect(container.textContent).toBe('John');
 		viewModel.name = 'James';
-		expect(node.textContent).toBe('James');
+		expect(container.textContent).toBe('James');
 	});
 	
 	it('handles array binding with simple values', function() {
@@ -92,21 +88,18 @@ describe('Knockwrap', function() {
 		};
 		knockwrap.wrap(viewModel);
 		
-		var listNode = document.createElement('ul');
-		listNode.dataset.bind = 'foreach: names';
+		container.innerHTML = (
+			'<ul data-bind="foreach: names">' +
+				// This binds to the strings themselves, not properties of them.
+				'<li data-bind="text: $data"></li>' +
+			'</ul>'
+		);
+		ko.applyBindings(viewModel, container);
 		
-		var itemNode = document.createElement('li');
-		// This binds to the strings themselves, not properties of them.
-		itemNode.dataset.bind = 'text: $data';
-		listNode.appendChild(itemNode);
-		
-		container.appendChild(listNode);
-		ko.applyBindings(viewModel, listNode);
-		
-		var generatedNodes = listNode.getElementsByTagName('li');
-		expect(generatedNodes[0].textContent).toBe('John');
-		expect(generatedNodes[1].textContent).toBe('James');
-		expect(generatedNodes[2].textContent).toBe('Robert');
+		var itemNodes = container.getElementsByTagName('li');
+		expect(itemNodes[0].textContent).toBe('John');
+		expect(itemNodes[1].textContent).toBe('James');
+		expect(itemNodes[2].textContent).toBe('Robert');
 	});
 	
 	it('handles array binding with simple values and change notification', function() {
@@ -115,23 +108,20 @@ describe('Knockwrap', function() {
 		};
 		knockwrap.wrap(viewModel);
 		
-		var listNode = document.createElement('ul');
-		listNode.dataset.bind = 'foreach: names';
-		
-		var itemNode = document.createElement('li');
-		// This binds to the strings themselves, not properties of them.
-		itemNode.dataset.bind = 'text: $data';
-		listNode.appendChild(itemNode);
-		
-		container.appendChild(listNode);
-		ko.applyBindings(viewModel, listNode);
+		container.innerHTML = (
+			'<ul data-bind="foreach: names">' +
+				// This binds to the strings themselves, not properties of them.
+				'<li data-bind="text: $data"></li>' +
+			'</ul>'
+		);
+		ko.applyBindings(viewModel, container);
 		
 		viewModel.names[1] = 'Jim';
 		
-		var generatedNodes = listNode.getElementsByTagName('li');
-		expect(generatedNodes[0].textContent).toBe('John');
-		expect(generatedNodes[1].textContent).toBe('Jim');
-		expect(generatedNodes[2].textContent).toBe('Robert');
+		var itemNodes = container.getElementsByTagName('li');
+		expect(itemNodes[0].textContent).toBe('John');
+		expect(itemNodes[1].textContent).toBe('Jim');
+		expect(itemNodes[2].textContent).toBe('Robert');
 	});
 	
 	it('handles array binding with simple values and array manipulation', function() {
@@ -140,22 +130,19 @@ describe('Knockwrap', function() {
 		};
 		knockwrap.wrap(viewModel);
 		
-		var listNode = document.createElement('ul');
-		listNode.dataset.bind = 'foreach: names';
-		
-		var itemNode = document.createElement('li');
-		// This binds to the strings themselves, not properties of them.
-		itemNode.dataset.bind = 'text: $data';
-		listNode.appendChild(itemNode);
-		
-		container.appendChild(listNode);
-		ko.applyBindings(viewModel, listNode);
+		container.innerHTML = (
+			'<ul data-bind="foreach: names">' +
+				// This binds to the strings themselves, not properties of them.
+				'<li data-bind="text: $data"></li>' +
+			'</ul>'
+		);
+		ko.applyBindings(viewModel, container);
 		
 		viewModel.names.splice(1, 1); // Remove middle item.
 		
-		var generatedNodes = listNode.getElementsByTagName('li');
-		expect(generatedNodes[0].textContent).toBe('John');
-		expect(generatedNodes[1].textContent).toBe('Robert');
-		expect(generatedNodes.length).toBe(2);
+		var itemNodes = container.getElementsByTagName('li');
+		expect(itemNodes[0].textContent).toBe('John');
+		expect(itemNodes[1].textContent).toBe('Robert');
+		expect(itemNodes.length).toBe(2);
 	});
 });
