@@ -94,4 +94,31 @@ describe('Knockwrap', function() {
 		viewModel.array.push({ name: 'James' });
 		expect(viewModel.array.length).toBe(1);
 	});
+	
+	it('removes objects removed by the splice method', function() {
+		var viewModel = {
+			array: [{ name: 'James' }]
+		};
+		knockwrap.wrapObject(viewModel);
+		
+		viewModel.array.splice(0);
+		expect(viewModel.array.length).toBe(0);
+	});
+	
+	it('notifies changes to objects added by the splice method', function() {
+		var viewModel = {
+			array: []
+		};
+		knockwrap.wrapObject(viewModel);
+		
+		var latestValue;
+		viewModel.array.splice(0, 0, {
+			name: 'James',
+			get title() {
+				return latestValue = 'Mr. ' + this.name;
+			}
+		});
+		viewModel.array[0].name = 'Robert';
+		expect(latestValue).toBe('Mr. Robert');
+	});
 });

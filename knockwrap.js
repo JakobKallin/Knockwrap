@@ -70,6 +70,7 @@ knockwrap = function() {
 		
 		wrapper.push = wrappedPush(wrapper, observable);
 		wrapLength(wrapper, observable);
+		wrapSplice(wrapper, observable);
 		
 		target[property] = wrapper;
 	}
@@ -83,9 +84,7 @@ knockwrap = function() {
 	function wrappedPush(wrapper, observable) {
 		return function() {
 			var args = Array.prototype.slice.call(arguments);
-			args.map(function(value) {
-				wrapObject(value);
-			});
+			args.map(wrapObject);
 			var oldLength = observable().length;
 			observable.push.apply(observable, args);
 			wrapNewArrayIndexes(wrapper, observable, oldLength);
@@ -107,6 +106,17 @@ knockwrap = function() {
 		Object.defineProperty(wrapper, 'length', {
 			get: getter
 		});
+	}
+	
+	function wrapSplice(wrapper, observable) {
+		wrapper.splice = function() {
+			var args = Array.prototype.slice.call(arguments);
+			var newObjects = args.slice(2);
+			newObjects.map(wrapObject);
+			var oldLength = observable().length;
+			observable.splice.apply(observable, args);
+			wrapNewArrayIndexes(wrapper, observable, oldLength);
+		};
 	}
 	
 	return {
