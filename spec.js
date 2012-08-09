@@ -71,4 +71,27 @@ describe('Knockwrap', function() {
 		viewModel.array.push({ name: 'Robert' })
 		expect(viewModel.array[1].name).toBe('Robert');
 	});
+	
+	it('exposes length property of array', function() {
+		var viewModel = {
+			array: []
+		};
+		knockwrap.wrapObject(viewModel);
+		
+		expect(viewModel.array.length).toBe(0);
+	});
+	
+	it('updates length property of array', function() {
+		var latestValue;
+		var viewModel = {
+			array: [],
+			get count() {
+				return latestValue = this.array.length;
+			}
+		};
+		knockwrap.wrapObject(viewModel);
+		
+		viewModel.array.push({ name: 'James' });
+		expect(viewModel.array.length).toBe(1);
+	});
 });

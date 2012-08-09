@@ -69,6 +69,7 @@ knockwrap = function() {
 		});
 		
 		wrapper.push = wrappedPush(wrapper, observable);
+		wrapLength(wrapper, observable);
 		
 		target[property] = wrapper;
 	}
@@ -97,6 +98,15 @@ knockwrap = function() {
 		for ( var index = lastOldIndex + 1; index <= lastNewIndex; index += 1 ) {
 			wrapArrayIndex(wrapper, index, observable);
 		}
+	}
+	
+	function wrapLength(wrapper, observable) {
+		var getter = function() {
+			return observable().length;
+		};
+		Object.defineProperty(wrapper, 'length', {
+			get: getter
+		});
 	}
 	
 	return {
