@@ -12,10 +12,18 @@ Object.getPropertyDescriptor = function(target, property) {
 };
 
 knockwrap = function() {
+	function wrapObject(target) {
+		for ( var property in target ) {
+			wrapProperty(target, property);
+		}
+	}
+	
 	function wrapProperty(target, property) {
 		var descriptor = Object.getPropertyDescriptor(target, property);
 		if ( descriptor.get ) {
 			wrapGetter(target, property);
+		} else if ( target[property] instanceof Array ) {
+			wrapArrayProperty(target, property);
 		} else {
 			wrapSimpleProperty(target, property);
 		}
@@ -33,19 +41,36 @@ knockwrap = function() {
 			get: getter,
 			set: setter
 		});
+		
+		return observable;
 	}
 	
 	function wrapGetter(target, property) {
 		var descriptor = Object.getPropertyDescriptor(target, property);
 		var originalGetter = descriptor.get;
-		var computed = ko.computed(originalGetter, target);
+		var observable = ko.computed(originalGetter, target);
 		var wrappedGetter = function() {
-			return computed();
+			return observable();
 		};
 		
 		Object.defineProperty(target, property, {
 			get: wrappedGetter
 		});
+	}
+	
+	function wrapArrayProperty(target, property) {
+		var array = target[property];
+		var observable = ko.observableArray(array);
+		
+		var wrapper = {};
+		array.forEach(function(value, index) {
+			wrapObject(value);
+			Object.defineProperty(wrapper, index, {
+				get: function() { return observable()[index]; }
+			});
+		});
+		
+		target[property] = wrapper;
 	}
 	
 	return {
