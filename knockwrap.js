@@ -62,7 +62,7 @@ knockwrap = function() {
 		var array = target[property];
 		var observable = ko.observableArray(array);
 		
-		var wrapper = {};
+		var wrapper = Object.create(array);
 		array.forEach(function(value, index) {
 			wrapObject(value);
 			wrapArrayIndex(wrapper, index, observable);

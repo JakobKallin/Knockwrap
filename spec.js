@@ -121,4 +121,17 @@ describe('Knockwrap', function() {
 		viewModel.array[0].name = 'Robert';
 		expect(latestValue).toBe('Mr. Robert');
 	});
+	
+	it('supports non-mutating array methods', function() {
+		var viewModel = {
+			array: [
+				{ name: 'James' },
+				{ name: 'Robert' }
+			]
+		};
+		knockwrap.wrapObject(viewModel);
+		
+		var secondName = viewModel.array.slice(1)[0].name;
+		expect(secondName).toBe('Robert');
+	});
 });
