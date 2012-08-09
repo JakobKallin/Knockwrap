@@ -74,6 +74,7 @@ knockwrap = function() {
 	}
 	
 	return {
-		wrapProperty: wrapProperty
+		wrapProperty: wrapProperty,
+		wrapObject: wrapObject
 	};
 }();

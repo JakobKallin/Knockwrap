@@ -20,32 +20,31 @@ describe('Knockwrap', function() {
 	});
 	
 	it('mutates computed properties', function() {
-		var target = {
+		var latestValue;
+		var viewModel = {
 			first: 'James',
 			last: 'Smith',
 			get full() {
-				return this.first + ' ' + this.last;
+				return latestValue = this.first + ' ' + this.last;
 			}
 		};
-		knockwrap.wrapProperty(target, 'first');
-		knockwrap.wrapProperty(target, 'last');
-		knockwrap.wrapProperty(target, 'full');
+		knockwrap.wrapObject(viewModel);
 		
-		target.first = 'Robert';
-		expect(target.full).toBe('Robert Smith');
+		viewModel.first = 'Robert';
+		expect(latestValue).toBe('Robert Smith');
 	});
 	
 	it('mutates objects in arrays', function() {
+		var latestValue;
 		var viewModel = {
-			array: [ { name: 'James' } ]
+			array: [ { name: 'James' } ],
+			get firstTitle() {
+				return latestValue = 'Mr. ' + this.array[0].name;
+			}
 		};
-		knockwrap.wrapProperty(viewModel, 'array');
-		
-		// We use HTML binding instead of a subscribe() call because the wrapped objects don't expose that method.
-		container.innerHTML = '<span data-bind="text: array[0].name"></span>';
-		ko.applyBindings(viewModel, container);
+		knockwrap.wrapObject(viewModel);
 		
 		viewModel.array[0].name = 'Robert';
-		expect(container.textContent).toBe('Robert');
+		expect(latestValue).toBe('Mr. Robert');
 	});
 });
