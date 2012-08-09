@@ -58,4 +58,17 @@ describe('Knockwrap', function() {
 		viewModel.array.push({ name: 'James' })
 		expect(viewModel.array[0].name).toBe('James');
 	});
+	
+	// This is to make sure that array indexes are wrapped only when they are outside the array's old range.
+	it('exposes multiple objects added to arrays', function() {
+		var latestValue;
+		var viewModel = {
+			array: []
+		};
+		knockwrap.wrapObject(viewModel);
+		
+		viewModel.array.push({ name: 'James' })
+		viewModel.array.push({ name: 'Robert' })
+		expect(viewModel.array[1].name).toBe('Robert');
+	});
 });

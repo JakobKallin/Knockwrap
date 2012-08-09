@@ -68,14 +68,7 @@ knockwrap = function() {
 			wrapArrayIndex(wrapper, index, observable);
 		});
 		
-		wrapper.push = function() {
-			var args = Array.prototype.slice.call(arguments);
-			args.forEach(function(value, index) {
-				wrapObject(value);
-				wrapArrayIndex(wrapper, index, observable);
-			});
-			observable.push.apply(observable, args);
-		};
+		wrapper.push = wrappedPush(wrapper, observable);
 		
 		target[property] = wrapper;
 	}
@@ -84,6 +77,26 @@ knockwrap = function() {
 		Object.defineProperty(wrapper, index, {
 			get: function() { return observable()[index]; }
 		});
+	}
+	
+	function wrappedPush(wrapper, observable) {
+		return function() {
+			var args = Array.prototype.slice.call(arguments);
+			args.map(function(value) {
+				wrapObject(value);
+			});
+			var oldLength = observable().length;
+			observable.push.apply(observable, args);
+			wrapNewArrayIndexes(wrapper, observable, oldLength);
+		};
+	}
+	
+	function wrapNewArrayIndexes(wrapper, observable, oldLength) {
+		var lastOldIndex = oldLength - 1;
+		var lastNewIndex = observable().length - 1;
+		for ( var index = lastOldIndex + 1; index <= lastNewIndex; index += 1 ) {
+			wrapArrayIndex(wrapper, index, observable);
+		}
 	}
 	
 	return {
