@@ -65,12 +65,25 @@ knockwrap = function() {
 		var wrapper = {};
 		array.forEach(function(value, index) {
 			wrapObject(value);
-			Object.defineProperty(wrapper, index, {
-				get: function() { return observable()[index]; }
-			});
+			wrapArrayIndex(wrapper, index, observable);
 		});
 		
+		wrapper.push = function() {
+			var args = Array.prototype.slice.call(arguments);
+			args.forEach(function(value, index) {
+				wrapObject(value);
+				wrapArrayIndex(wrapper, index, observable);
+			});
+			observable.push.apply(observable, args);
+		};
+		
 		target[property] = wrapper;
+	}
+	
+	function wrapArrayIndex(wrapper, index, observable) {
+		Object.defineProperty(wrapper, index, {
+			get: function() { return observable()[index]; }
+		});
 	}
 	
 	return {

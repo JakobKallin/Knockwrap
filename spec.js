@@ -47,4 +47,15 @@ describe('Knockwrap', function() {
 		viewModel.array[0].name = 'Robert';
 		expect(latestValue).toBe('Mr. Robert');
 	});
+	
+	it('exposes objects added to arrays', function() {
+		var latestValue;
+		var viewModel = {
+			array: []
+		};
+		knockwrap.wrapObject(viewModel);
+		
+		viewModel.array.push({ name: 'James' })
+		expect(viewModel.array[0].name).toBe('James');
+	});
 });
