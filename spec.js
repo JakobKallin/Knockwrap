@@ -134,4 +134,10 @@ describe('Knockwrap', function() {
 		var secondName = viewModel.array.slice(1)[0].name;
 		expect(secondName).toBe('Robert');
 	});
+	
+	it('only wraps values if they are objects', function() {
+		// These calls should throw exceptions.
+		knockwrap.wrapObject("James");
+		knockwrap.wrapObject(0);
+	});
 });
