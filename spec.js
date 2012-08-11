@@ -122,6 +122,24 @@ describe('Knockwrap', function() {
 		expect(latestValue).toBe('Mr. Robert');
 	});
 	
+	it('notifies changes to objects added after others have been removed', function() {
+		var viewModel = {
+			array: [{ name: 'James' }]
+		};
+		knockwrap.wrapObject(viewModel);
+		
+		var latestValue;
+		viewModel.array.splice(0, 1);
+		viewModel.array.splice(0, 0, {
+			name: 'Robert',
+			get title() {
+				return latestValue = 'Mr. ' + this.name;
+			}
+		});
+		viewModel.array[0].name = 'Michael';
+		expect(latestValue).toBe('Mr. Michael');
+	});
+	
 	it('supports non-mutating array methods', function() {
 		var viewModel = {
 			array: [

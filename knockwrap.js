@@ -68,7 +68,7 @@ knockwrap = function() {
 			wrapArrayIndex(wrapper, index, observable);
 		});
 		
-		wrapper.push = wrappedPush(wrapper, observable);
+		wrapPush(wrapper, observable);
 		wrapLength(wrapper, observable);
 		wrapSplice(wrapper, observable);
 		
@@ -81,22 +81,26 @@ knockwrap = function() {
 		});
 	}
 	
-	function wrappedPush(wrapper, observable) {
-		return function() {
+	function wrapPush(wrapper, observable) {
+		var maxLength = observable().length;
+		wrapper.push = function() {
 			var args = Array.prototype.slice.call(arguments);
 			args.map(wrapObject);
-			var oldLength = observable().length;
 			observable.push.apply(observable, args);
-			wrapNewArrayIndexes(wrapper, observable, oldLength);
+			maxLength = wrapNewArrayIndexes(wrapper, observable, maxLength);
 		};
 	}
 	
-	function wrapNewArrayIndexes(wrapper, observable, oldLength) {
-		var lastOldIndex = oldLength - 1;
-		var lastNewIndex = observable().length - 1;
-		for ( var index = lastOldIndex + 1; index <= lastNewIndex; index += 1 ) {
+	function wrapNewArrayIndexes(wrapper, observable, maxLength) {
+		var oldLastIndex = maxLength - 1;
+		var newLength = observable().length;
+		var newLastIndex = newLength - 1;
+		for ( var index = oldLastIndex + 1; index <= newLastIndex; index += 1 ) {
 			wrapArrayIndex(wrapper, index, observable);
 		}
+		
+		var newMaxLength = Math.max(maxLength, newLength);
+		return newMaxLength;
 	}
 	
 	function wrapLength(wrapper, observable) {
@@ -109,13 +113,13 @@ knockwrap = function() {
 	}
 	
 	function wrapSplice(wrapper, observable) {
+		var maxLength = observable().length;
 		wrapper.splice = function() {
 			var args = Array.prototype.slice.call(arguments);
 			var newObjects = args.slice(2);
 			newObjects.map(wrapObject);
-			var oldLength = observable().length;
 			observable.splice.apply(observable, args);
-			wrapNewArrayIndexes(wrapper, observable, oldLength);
+			maxLength = wrapNewArrayIndexes(wrapper, observable, maxLength);
 		};
 	}
 	
