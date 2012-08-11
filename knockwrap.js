@@ -68,9 +68,8 @@ knockwrap = function() {
 			wrapArrayIndex(wrapper, index, observable);
 		});
 		
-		wrapPush(wrapper, observable);
 		wrapLength(wrapper, observable);
-		wrapSplice(wrapper, observable);
+		wrapMutators(wrapper, observable);
 		
 		target[property] = wrapper;
 	}
@@ -81,12 +80,31 @@ knockwrap = function() {
 		});
 	}
 	
-	function wrapPush(wrapper, observable) {
+	function wrapLength(wrapper, observable) {
+		var getter = function() {
+			return observable().length;
+		};
+		Object.defineProperty(wrapper, 'length', {
+			get: getter
+		});
+	}
+	
+	// We need all of these in a single method so that they all have access to the same maxLength variable.
+	function wrapMutators(wrapper, observable) {
 		var maxLength = observable().length;
+		
 		wrapper.push = function() {
 			var args = Array.prototype.slice.call(arguments);
 			args.map(wrapObject);
 			observable.push.apply(observable, args);
+			maxLength = wrapNewArrayIndexes(wrapper, observable, maxLength);
+		};
+		
+		wrapper.splice = function() {
+			var args = Array.prototype.slice.call(arguments);
+			var newObjects = args.slice(2);
+			newObjects.map(wrapObject);
+			observable.splice.apply(observable, args);
 			maxLength = wrapNewArrayIndexes(wrapper, observable, maxLength);
 		};
 	}
@@ -101,26 +119,6 @@ knockwrap = function() {
 		
 		var newMaxLength = Math.max(maxLength, newLength);
 		return newMaxLength;
-	}
-	
-	function wrapLength(wrapper, observable) {
-		var getter = function() {
-			return observable().length;
-		};
-		Object.defineProperty(wrapper, 'length', {
-			get: getter
-		});
-	}
-	
-	function wrapSplice(wrapper, observable) {
-		var maxLength = observable().length;
-		wrapper.splice = function() {
-			var args = Array.prototype.slice.call(arguments);
-			var newObjects = args.slice(2);
-			newObjects.map(wrapObject);
-			observable.splice.apply(observable, args);
-			maxLength = wrapNewArrayIndexes(wrapper, observable, maxLength);
-		};
 	}
 	
 	return {
