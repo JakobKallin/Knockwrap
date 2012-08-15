@@ -48,6 +48,20 @@ describe('Knockwrap', function() {
 		expect(latestValue).toBe('Mr. Robert');
 	});
 	
+	it('mutates objects in objects', function() {
+		var latestValue;
+		var person = {
+			name: { first: 'James', last: 'Smith' },
+			get fullName() {
+				return latestValue = this.name.first + ' ' + this.name.last;
+			}
+		};
+		knockwrap.wrapObject(person);
+		
+		person.name.first = 'Robert';
+		expect(latestValue).toBe('Robert Smith');
+	});
+	
 	it('exposes objects added to arrays', function() {
 		var latestValue;
 		var viewModel = {
@@ -176,5 +190,74 @@ describe('Knockwrap', function() {
 		// These calls should throw exceptions.
 		knockwrap.wrapObject("James");
 		knockwrap.wrapObject(0);
+	});
+	
+	it('deeply copies simple properties', function() {
+		var person = { name: 'James' };
+		knockwrap.wrapObject(person);
+		
+		var other = knockwrap.copy(person);
+		other.name = 'Robert';
+		
+		expect(person.name).toBe('James');
+		expect(other.name).toBe('Robert');
+	});
+	
+	it('deeply copies prototypal getters', function() {
+		var person = {
+			get full() {
+				return this.first + ' ' + this.last;
+			}
+		};
+		
+		var james = Object.create(person);
+		james.first = 'James';
+		james.last = 'Smith';
+		knockwrap.wrapObject(james);
+		
+		var robert = knockwrap.copy(james);
+		robert.first = 'Robert';
+		
+		expect(james.full).toBe('James Smith');
+		expect(robert.full).toBe('Robert Smith');
+	});
+	
+	it('deeply copies arrays', function() {
+		var james = {
+			nicknames: ['Jim']
+		};
+		knockwrap.wrapObject(james);
+		
+		var jimmy = knockwrap.copy(james);
+		jimmy.nicknames.push('Jimmy');
+		
+		expect(james.nicknames.length).toBe(1);
+		expect(jimmy.nicknames.length).toBe(2);
+	});
+	
+	it('deeply copies objects in arrays', function() {
+		var james = {
+			foods: [ {type: 'tomato', color: 'red'} ]
+		};
+		knockwrap.wrapObject(james);
+		
+		var robert = knockwrap.copy(james);
+		robert.foods[0].color = 'green';
+		
+		expect(james.foods[0].color).toBe('red');
+		expect(robert.foods[0].color).toBe('green');
+	});
+	
+	it('deeply copies objects in objects', function() {
+		var james = {
+			food: { type: 'tomato', color: 'red' }
+		};
+		knockwrap.wrapObject(james);
+		
+		var robert = knockwrap.copy(james);
+		robert.food.color = 'green';
+		
+		expect(james.food.color).toBe('red');
+		expect(robert.food.color).toBe('green');
 	});
 });
