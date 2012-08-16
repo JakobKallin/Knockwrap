@@ -34,6 +34,22 @@ describe('Knockwrap', function() {
 		expect(latestValue).toBe('Robert Smith');
 	});
 	
+	it('mutates objects in objects', function() {
+		var latestValue;
+		var person = {
+			name: {
+				first: 'James',
+				get title() {
+					return latestValue = 'Mr. ' + this.first
+				}
+			}
+		};
+		knockwrap.wrapObject(person);
+		
+		person.name.first = 'Jim';
+		expect(latestValue).toBe('Mr. Jim');
+	});
+	
 	it('mutates objects in arrays', function() {
 		var latestValue;
 		var viewModel = {
