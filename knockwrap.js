@@ -16,6 +16,8 @@ knockwrap = function() {
 			wrapGetter(target, property);
 		} else if ( target[property] instanceof Array ) {
 			wrapArrayProperty(target, property);
+		} else if ( target[property] instanceof Function ) {
+			wrapFunctionProperty(target, property);
 		} else if ( target[property] instanceof Object ) {
 			wrapObjectProperty(target, property);
 		} else {
@@ -57,6 +59,14 @@ knockwrap = function() {
 			get: wrappedGetter,
 			enumerable: true
 		});
+	}
+	
+	// We make sure that the proper "this" keyword is used, because Knockout redefines it.
+	function wrapFunctionProperty(target, property) {
+		var oldFunction = target[property];
+		target[property] = function() {
+			return oldFunction.apply(target, arguments);
+		};
 	}
 	
 	function wrapArrayProperty(target, property) {

@@ -258,4 +258,20 @@ describe('Knockwrap', function() {
 		expect(james.food.color).toBe('red');
 		expect(robert.food.color).toBe('green');
 	});
+	
+	it('retains "this" keyword in wrapped functions', function() {
+		var james = {
+			name: 'James',
+			changeName: function() {
+				this.name = 'Robert';
+			}
+		};
+		knockwrap.wrapObject(james);
+		
+		var michael = { name: 'Michael' };
+		james.changeName.apply(michael);
+		
+		expect(james.name).toBe('Robert');
+		expect(michael.name).toBe('Michael');
+	});
 });
