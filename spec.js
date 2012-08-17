@@ -292,4 +292,47 @@ describe('Knockwrap', function() {
 		expect(james2.name).toBe('Robert');
 		expect(michael.name).toBe('Michael');
 	});
+	
+	it('retains "this" keyword in functions inside copied objects', function() {
+		var james = {
+			name: {
+				first: 'James',
+				change: function() {
+					this.first = 'Robert';
+				}
+			}
+		};
+		knockwrap.wrapObject(james);
+		var james2 = james.copy();
+		
+		var michael = { first: 'Michael' };
+		james2.name.change.apply(michael);
+		
+		expect(james.name.first).toBe('James');
+		expect(james2.name.first).toBe('Robert');
+		expect(michael.first).toBe('Michael');
+	});
+	
+	// The reason for this test is that objects might become incorrectly wrapped twice.
+	it('retains "this" keyword in functions inside objects copied twice', function() {
+		var james = {
+			name: {
+				first: 'James',
+				change: function() {
+					this.first = 'Robert';
+				}
+			}
+		};
+		knockwrap.wrapObject(james);
+		var james2 = james.copy();
+		var james3 = james2.copy();
+		
+		var michael = { first: 'Michael' };
+		james3.name.change.apply(michael);
+		
+		expect(james.name.first).toBe('James');
+		expect(james2.name.first).toBe('James');
+		expect(james3.name.first).toBe('Robert');
+		expect(michael.first).toBe('Michael');
+	});
 });

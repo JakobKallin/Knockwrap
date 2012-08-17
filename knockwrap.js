@@ -1,11 +1,14 @@
 knockwrap = function() {
 	function wrapObject(target) {
-		if ( target instanceof Object ) {
+		if ( target instanceof Object && !target.isKnockwrapped ) {
 			for ( var property in target ) {
 				wrapProperty(target, property);
 			}
 			Object.defineProperty(target, 'copy', {
 				value: copyObject
+			});
+			Object.defineProperty(target, 'isKnockwrapped', {
+				value: true
 			});
 		}
 	}
@@ -143,6 +146,11 @@ knockwrap = function() {
 		}
 	}
 	
+	/*
+	It is important to remember that every call to copy wraps the copied object, and that nested objects are copied before their parent.
+	Since every invocation of copyObject ends by calling wrapObject, which also works recursively, this means that nested objects are wrapped once for every ancestor.
+	To prevent this from causing trouble, every wrapped object is simply given an "isKnockwrapped" property, which prevents them from ever being wrapped again.
+	*/
 	function copyObject() {
 		var original = this;
 		var copy = {};
