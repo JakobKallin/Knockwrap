@@ -1,16 +1,3 @@
-Object.getPropertyDescriptor = function(target, property) {
-	var descriptor = Object.getOwnPropertyDescriptor(target, property);
-	var proto = Object.getPrototypeOf(target);
-	
-	if ( descriptor ) {
-		return descriptor;
-	} else if ( proto ) {
-		return Object.getPropertyDescriptor(proto, property);
-	} else {
-		return undefined;
-	}
-};
-
 knockwrap = function() {
 	function wrapObject(target) {
 		if ( target instanceof Object ) {
@@ -21,7 +8,7 @@ knockwrap = function() {
 	}
 	
 	function wrapProperty(target, property) {
-		var descriptor = Object.getPropertyDescriptor(target, property);
+		var descriptor = Object.getOwnPropertyDescriptor(target, property);
 		if ( descriptor.get ) {
 			wrapGetter(target, property);
 		} else if ( target[property] instanceof Array ) {
@@ -49,12 +36,15 @@ knockwrap = function() {
 	}
 	
 	function wrapGetter(target, property) {
-		var descriptor = Object.getPropertyDescriptor(target, property);
+		var descriptor = Object.getOwnPropertyDescriptor(target, property);
 		var originalGetter = descriptor.get;
 		var observable = ko.computed(originalGetter, target);
 		var wrappedGetter = function() {
 			return observable();
 		};
+		
+		// We save the original getter so that we can copy it later.
+		wrappedGetter.original = originalGetter;
 		
 		Object.defineProperty(target, property, {
 			get: wrappedGetter,
@@ -127,18 +117,18 @@ knockwrap = function() {
 		return newMaxLength;
 	}
 	
-	function deepCopy(original) {
+	function copy(original) {
 		if ( original instanceof Object ) {
-			return deepCopyObject(original);
+			return copyObject(original);
 		} else {
 			return original;
 		}
 	}
 	
-	function deepCopyObject(original) {
+	function copyObject(original) {
 		var copy = {};
 		for ( var property in original ) {
-			var descriptor = Object.getPropertyDescriptor(original, property);
+			var descriptor = Object.getOwnPropertyDescriptor(original, property);
 			// We need to check for .get because the property might be an array or object, and those are not wrapped.
 			var propertyIsArray = (
 				!descriptor.get &&
@@ -154,7 +144,7 @@ knockwrap = function() {
 			var propertyIsGetter = descriptor.get && !descriptor.set;
 			
 			if ( propertyIsObject ) {
-				copy[property] = deepCopyObject(original[property]);
+				copy[property] = copyObject(original[property]);
 			} else if ( propertyIsArray ) {
 				copy[property] = [];
 				original[property].map(function(originalValue) {
@@ -162,11 +152,10 @@ knockwrap = function() {
 					copy[property].push(copyValue);
 				});
 			} else if ( propertyIsGetter ) {
-				var proto = Object.getPrototypeOf(original);
-				// We need to get the prototype's descriptor because the instance's getter is wrapped and bound with that instance as "this".
-				var protoDescriptor = Object.getPropertyDescriptor(proto, property);
+				var descriptor = Object.getOwnPropertyDescriptor(original, property);
 				Object.defineProperty(copy, property, {
-					get: protoDescriptor.get,
+					// We use the original getter, which will be wrapped below.
+					get: descriptor.get.original,
 					configurable: true,
 					enumerable: true
 				});
@@ -182,6 +171,6 @@ knockwrap = function() {
 	return {
 		wrapProperty: wrapProperty,
 		wrapObject: wrapObject,
-		copy: deepCopy
+		copy: copy
 	};
 }();

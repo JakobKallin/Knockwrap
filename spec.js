@@ -203,16 +203,14 @@ describe('Knockwrap', function() {
 		expect(other.name).toBe('Robert');
 	});
 	
-	it('deeply copies prototypal getters', function() {
-		var person = {
+	it('deeply copies getters', function() {
+		var james = {
+			first: 'James',
+			last: 'Smith',
 			get full() {
 				return this.first + ' ' + this.last;
 			}
 		};
-		
-		var james = Object.create(person);
-		james.first = 'James';
-		james.last = 'Smith';
 		knockwrap.wrapObject(james);
 		
 		var robert = knockwrap.copy(james);
