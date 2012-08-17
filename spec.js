@@ -10,7 +10,7 @@ describe('Knockwrap', function() {
 		document.body.removeChild(container);
 	});
 	
-	it('mutates simple properties', function() {
+	it('notifies changes to simple properties', function() {
 		var target = {
 			name: 'James'
 		};
@@ -19,7 +19,7 @@ describe('Knockwrap', function() {
 		expect(target.name).toBe('John');
 	});
 	
-	it('mutates computed properties', function() {
+	it('notifies changes to computed properties', function() {
 		var latestValue;
 		var viewModel = {
 			first: 'James',
@@ -34,7 +34,7 @@ describe('Knockwrap', function() {
 		expect(latestValue).toBe('Robert Smith');
 	});
 	
-	it('mutates objects in arrays', function() {
+	it('notifies changes to objects in arrays', function() {
 		var latestValue;
 		var viewModel = {
 			array: [ { name: 'James' } ],
@@ -48,7 +48,7 @@ describe('Knockwrap', function() {
 		expect(latestValue).toBe('Mr. Robert');
 	});
 	
-	it('mutates objects in objects', function() {
+	it('notifies changes to objects inside objects', function() {
 		var latestValue;
 		var person = {
 			name: { first: 'James', last: 'Smith' },
@@ -248,7 +248,7 @@ describe('Knockwrap', function() {
 		expect(robert.foods[0].color).toBe('green');
 	});
 	
-	it('deeply copies objects in objects', function() {
+	it('deeply copies objects inside objects', function() {
 		var james = {
 			food: { type: 'tomato', color: 'red' }
 		};
