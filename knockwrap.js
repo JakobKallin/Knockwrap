@@ -63,10 +63,11 @@ knockwrap = function() {
 	
 	// We make sure that the proper "this" keyword is used, because Knockout redefines it.
 	function wrapFunctionProperty(target, property) {
-		var oldFunction = target[property];
+		var original = target[property];
 		target[property] = function() {
-			return oldFunction.apply(target, arguments);
+			return original.apply(target, arguments);
 		};
+		target[property].original = original;
 	}
 	
 	function wrapArrayProperty(target, property) {
@@ -148,28 +149,9 @@ knockwrap = function() {
 		for ( var property in original ) {
 			var descriptor = Object.getOwnPropertyDescriptor(original, property);
 			// We need to check for .get because the property might be an array or object, and those are not wrapped.
-			var propertyIsArray = (
-				!descriptor.get &&
-				!descriptor.set &&
-				original[property] instanceof Array
-			);
-			var propertyIsObject = (
-				!descriptor.get &&
-				!descriptor.set &&
-				original[property] instanceof Object &&
-				!propertyIsArray
-			);
 			var propertyIsGetter = descriptor.get && !descriptor.set;
 			
-			if ( propertyIsObject ) {
-				copy[property] = copyObject.call(original[property]);
-			} else if ( propertyIsArray ) {
-				copy[property] = [];
-				original[property].map(function(originalValue) {
-					var copiedValue = copyValue(originalValue);
-					copy[property].push(copiedValue);
-				});
-			} else if ( propertyIsGetter ) {
+			if ( propertyIsGetter ) {
 				var descriptor = Object.getOwnPropertyDescriptor(original, property);
 				Object.defineProperty(copy, property, {
 					// We use the original getter, which will be wrapped below.
@@ -177,6 +159,16 @@ knockwrap = function() {
 					configurable: true,
 					enumerable: true
 				});
+			} else if ( original[property] instanceof Function ) {
+				copy[property] = original[property].original;
+			} else if ( original[property] instanceof Array ) {
+				copy[property] = [];
+				original[property].map(function(originalValue) {
+					var copiedValue = copyValue(originalValue);
+					copy[property].push(copiedValue);
+				});
+			} else if ( original[property] instanceof Object ) {
+				copy[property] = copyObject.call(original[property]);
 			} else {
 				copy[property] = copyValue(original[property]);
 			}

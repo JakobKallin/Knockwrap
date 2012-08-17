@@ -274,4 +274,22 @@ describe('Knockwrap', function() {
 		expect(james.name).toBe('Robert');
 		expect(michael.name).toBe('Michael');
 	});
+	
+	it('retains "this" keyword in copied functions', function() {
+		var james = {
+			name: 'James',
+			changeName: function() {
+				this.name = 'Robert';
+			}
+		};
+		knockwrap.wrapObject(james);
+		var james2 = james.copy();
+		
+		var michael = { name: 'Michael' };
+		james2.changeName.apply(michael);
+		
+		expect(james.name).toBe('James');
+		expect(james2.name).toBe('Robert');
+		expect(michael.name).toBe('Michael');
+	});
 });
