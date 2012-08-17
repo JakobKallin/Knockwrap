@@ -10,7 +10,7 @@ describe('Knockwrap', function() {
 		document.body.removeChild(container);
 	});
 	
-	it('mutates simple properties', function() {
+	it('notifies changes to simple properties', function() {
 		var target = {
 			name: 'James'
 		};
@@ -19,7 +19,7 @@ describe('Knockwrap', function() {
 		expect(target.name).toBe('John');
 	});
 	
-	it('mutates computed properties', function() {
+	it('notifies changes to computed properties', function() {
 		var latestValue;
 		var viewModel = {
 			first: 'James',
@@ -34,23 +34,7 @@ describe('Knockwrap', function() {
 		expect(latestValue).toBe('Robert Smith');
 	});
 	
-	it('mutates objects in objects', function() {
-		var latestValue;
-		var person = {
-			name: {
-				first: 'James',
-				get title() {
-					return latestValue = 'Mr. ' + this.first
-				}
-			}
-		};
-		knockwrap.wrapObject(person);
-		
-		person.name.first = 'Jim';
-		expect(latestValue).toBe('Mr. Jim');
-	});
-	
-	it('mutates objects in arrays', function() {
+	it('notifies changes to objects in arrays', function() {
 		var latestValue;
 		var viewModel = {
 			array: [ { name: 'James' } ],
@@ -62,6 +46,20 @@ describe('Knockwrap', function() {
 		
 		viewModel.array[0].name = 'Robert';
 		expect(latestValue).toBe('Mr. Robert');
+	});
+	
+	it('notifies changes to objects inside objects', function() {
+		var latestValue;
+		var person = {
+			name: { first: 'James', last: 'Smith' },
+			get fullName() {
+				return latestValue = this.name.first + ' ' + this.name.last;
+			}
+		};
+		knockwrap.wrapObject(person);
+		
+		person.name.first = 'Robert';
+		expect(latestValue).toBe('Robert Smith');
 	});
 	
 	it('exposes objects added to arrays', function() {
@@ -192,5 +190,72 @@ describe('Knockwrap', function() {
 		// These calls should throw exceptions.
 		knockwrap.wrapObject("James");
 		knockwrap.wrapObject(0);
+	});
+	
+	it('deeply copies simple properties', function() {
+		var person = { name: 'James' };
+		knockwrap.wrapObject(person);
+		
+		var other = person.copy();
+		other.name = 'Robert';
+		
+		expect(person.name).toBe('James');
+		expect(other.name).toBe('Robert');
+	});
+	
+	it('deeply copies getters', function() {
+		var james = {
+			first: 'James',
+			last: 'Smith',
+			get full() {
+				return this.first + ' ' + this.last;
+			}
+		};
+		knockwrap.wrapObject(james);
+		
+		var robert = james.copy();
+		robert.first = 'Robert';
+		
+		expect(james.full).toBe('James Smith');
+		expect(robert.full).toBe('Robert Smith');
+	});
+	
+	it('deeply copies arrays', function() {
+		var james = {
+			nicknames: ['Jim']
+		};
+		knockwrap.wrapObject(james);
+		
+		var jimmy = james.copy();
+		jimmy.nicknames.push('Jimmy');
+		
+		expect(james.nicknames.length).toBe(1);
+		expect(jimmy.nicknames.length).toBe(2);
+	});
+	
+	it('deeply copies objects in arrays', function() {
+		var james = {
+			foods: [ {type: 'tomato', color: 'red'} ]
+		};
+		knockwrap.wrapObject(james);
+		
+		var robert = james.copy();
+		robert.foods[0].color = 'green';
+		
+		expect(james.foods[0].color).toBe('red');
+		expect(robert.foods[0].color).toBe('green');
+	});
+	
+	it('deeply copies objects inside objects', function() {
+		var james = {
+			food: { type: 'tomato', color: 'red' }
+		};
+		knockwrap.wrapObject(james);
+		
+		var robert = james.copy();
+		robert.food.color = 'green';
+		
+		expect(james.food.color).toBe('red');
+		expect(robert.food.color).toBe('green');
 	});
 });
