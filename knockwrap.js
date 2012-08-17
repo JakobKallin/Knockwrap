@@ -4,6 +4,9 @@ knockwrap = function() {
 			for ( var property in target ) {
 				wrapProperty(target, property);
 			}
+			Object.defineProperty(target, 'copy', {
+				value: copyObject
+			});
 		}
 	}
 	
@@ -117,15 +120,16 @@ knockwrap = function() {
 		return newMaxLength;
 	}
 	
-	function copy(original) {
+	function copyValue(original) {
 		if ( original instanceof Object ) {
-			return copyObject(original);
+			return copyObject.call(original);
 		} else {
 			return original;
 		}
 	}
 	
-	function copyObject(original) {
+	function copyObject() {
+		var original = this;
 		var copy = {};
 		for ( var property in original ) {
 			var descriptor = Object.getOwnPropertyDescriptor(original, property);
@@ -144,12 +148,12 @@ knockwrap = function() {
 			var propertyIsGetter = descriptor.get && !descriptor.set;
 			
 			if ( propertyIsObject ) {
-				copy[property] = copyObject(original[property]);
+				copy[property] = copyObject.call(original[property]);
 			} else if ( propertyIsArray ) {
 				copy[property] = [];
 				original[property].map(function(originalValue) {
-					var copyValue = knockwrap.copy(originalValue);
-					copy[property].push(copyValue);
+					var copiedValue = copyValue(originalValue);
+					copy[property].push(copiedValue);
 				});
 			} else if ( propertyIsGetter ) {
 				var descriptor = Object.getOwnPropertyDescriptor(original, property);
@@ -160,7 +164,7 @@ knockwrap = function() {
 					enumerable: true
 				});
 			} else {
-				copy[property] = knockwrap.copy(original[property]);
+				copy[property] = copyValue(original[property]);
 			}
 		};
 		
@@ -170,7 +174,6 @@ knockwrap = function() {
 	
 	return {
 		wrapProperty: wrapProperty,
-		wrapObject: wrapObject,
-		copy: copy
+		wrapObject: wrapObject
 	};
 }();

@@ -196,7 +196,7 @@ describe('Knockwrap', function() {
 		var person = { name: 'James' };
 		knockwrap.wrapObject(person);
 		
-		var other = knockwrap.copy(person);
+		var other = person.copy();
 		other.name = 'Robert';
 		
 		expect(person.name).toBe('James');
@@ -213,7 +213,7 @@ describe('Knockwrap', function() {
 		};
 		knockwrap.wrapObject(james);
 		
-		var robert = knockwrap.copy(james);
+		var robert = james.copy();
 		robert.first = 'Robert';
 		
 		expect(james.full).toBe('James Smith');
@@ -226,7 +226,7 @@ describe('Knockwrap', function() {
 		};
 		knockwrap.wrapObject(james);
 		
-		var jimmy = knockwrap.copy(james);
+		var jimmy = james.copy();
 		jimmy.nicknames.push('Jimmy');
 		
 		expect(james.nicknames.length).toBe(1);
@@ -239,7 +239,7 @@ describe('Knockwrap', function() {
 		};
 		knockwrap.wrapObject(james);
 		
-		var robert = knockwrap.copy(james);
+		var robert = james.copy();
 		robert.foods[0].color = 'green';
 		
 		expect(james.foods[0].color).toBe('red');
@@ -252,7 +252,7 @@ describe('Knockwrap', function() {
 		};
 		knockwrap.wrapObject(james);
 		
-		var robert = knockwrap.copy(james);
+		var robert = james.copy();
 		robert.food.color = 'green';
 		
 		expect(james.food.color).toBe('red');
