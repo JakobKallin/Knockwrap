@@ -336,3 +336,75 @@ describe('Knockwrap', function() {
 		expect(michael.first).toBe('Michael');
 	});
 });
+
+describe('Knockwrap state copying', function() {
+	it('copies simple values', function() {
+		var james = {
+			name: 'James'
+		};
+		knockwrap.wrap(james);
+		var copy = james.copyState();
+		
+		expect(copy.name).toBe('James');
+	});
+	
+	it('copies arrays', function() {
+		var james = {
+				nicknames: ['Jim', 'Jimmy']
+		};
+		knockwrap.wrap(james);
+		var copy = james.copyState();
+		
+		expect(copy.nicknames).toEqual(['Jim', 'Jimmy']);
+	});
+	
+	it('copies objects inside objects', function() {
+		var james = {
+				name: {
+					first: 'James',
+					last: 'Smith'
+				}
+		};
+		knockwrap.wrap(james);
+		var copy = james.copyState();
+		
+		expect(copy.name).toEqual({ first: 'James', last: 'Smith' });
+	});
+	
+	it('copies objects inside arrays', function() {
+		var james = {
+			nicknames: [
+				{ name: 'Jim' },
+				{ name: 'Jimmy' }
+			]
+		};
+		knockwrap.wrap(james);
+		var copy = james.copyState();
+		
+		expect(copy.nicknames).toEqual([{ name: 'Jim' }, { name: 'Jimmy' }]);
+	});
+	
+	it('does not copy getters', function() {
+		var james = {
+				get name() {
+					return 'James';
+				}
+		};
+		knockwrap.wrap(james);
+		var copy = james.copyState();
+		
+		expect('name' in copy).toBe(false);
+	});
+	
+	it('does not copy functions', function() {
+		var james = {
+				name: function() {
+					return 'James';
+				}
+		};
+		knockwrap.wrap(james);
+		var copy = james.copyState();
+		
+		expect('name' in copy).toBe(false);
+	});
+});
