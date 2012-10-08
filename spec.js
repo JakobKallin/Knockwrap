@@ -348,6 +348,15 @@ describe('Knockwrap state copying', function() {
 		expect(copy.name).toBe('James');
 	});
 	
+	it('copies simple unwrapped values', function() {
+		var james = {};
+		knockwrap.wrap(james);
+		james.name = 'James';
+		var copy = james.copyState();
+		
+		expect(copy.name).toBe('James');
+	});
+	
 	it('copies arrays', function() {
 		var james = {
 				nicknames: ['Jim', 'Jimmy']
