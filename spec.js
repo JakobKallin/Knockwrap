@@ -68,6 +68,24 @@ describe('Knockwrap', function() {
 		person.name = { first: 'Robert', last: 'Johnson' };
 		expect(latestValue).toBe('Robert Johnson');
 	});
+	
+	it('notifies changes to initially undefined object properties', function() {
+		var latestValue;
+		
+		var viewModel = {
+			person: undefined
+		};
+		knockwrap.wrapObject(viewModel);
+		
+		viewModel.person = {
+			name: 'James',
+			get title() {
+				console.log(this);
+				return latestValue = 'Mr. ' + this.name;
+			}
+		};
+		expect(latestValue).toBe('Mr. James');
+	});
 });
 
 describe('Knockwrap array wrapping', function() {
