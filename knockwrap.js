@@ -5,10 +5,14 @@ knockwrap = function() {
 				wrapProperty(target, property);
 			}
 			Object.defineProperty(target, 'copy', {
-				value: wrapCopyObject
+				value: function() {
+					return wrapCopyObject(this);
+				}
 			});
 			Object.defineProperty(target, 'copyState', {
-				value: copyObjectState
+				value: function() {
+					return copyObjectState(this);
+				}
 			});
 			Object.defineProperty(target, 'isKnockwrapped', {
 				value: true
@@ -143,20 +147,19 @@ knockwrap = function() {
 	
 	function copyValue(original) {
 		if ( original instanceof Object ) {
-			return wrapCopyObject.call(original);
+			return wrapCopyObject(original);
 		} else {
 			return original;
 		}
 	}
 	
-	function wrapCopyObject() {
-		var copy = copyObject.call(this);
+	function wrapCopyObject(original) {
+		var copy = copyObject(original);
 		knockwrap.wrapObject(copy);
 		return copy;
 	};
 	
-	function copyObject() {
-		var original = this;
+	function copyObject(original) {
 		var copy = {};
 		for ( var property in original ) {
 			var descriptor = Object.getOwnPropertyDescriptor(original, property);
@@ -180,7 +183,7 @@ knockwrap = function() {
 					copy[property].push(copiedValue);
 				});
 			} else if ( original[property] instanceof Object ) {
-				copy[property] = copyObject.call(original[property]);
+				copy[property] = copyObject(original[property]);
 			} else {
 				copy[property] = copyValue(original[property]);
 			}
@@ -189,8 +192,7 @@ knockwrap = function() {
 		return copy;
 	}
 	
-	function copyObjectState() {
-		var original = this;
+	function copyObjectState(original) {
 		var copy = {};
 		
 		for ( var property in original ) {

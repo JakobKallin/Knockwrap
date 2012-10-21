@@ -293,7 +293,7 @@ describe('Knockwrap', function() {
 		expect(michael.name).toBe('Michael');
 	});
 	
-	it('retains "this" keyword in functions inside copied objects', function() {
+	it('retains "this" keyword in copied nested functions', function() {
 		var james = {
 			name: {
 				first: 'James',
