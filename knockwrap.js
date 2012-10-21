@@ -28,19 +28,19 @@ knockwrap = function() {
 			wrapArrayProperty(target, property);
 		} else if ( target[property] instanceof Function ) {
 			wrapFunctionProperty(target, property);
-		} else if ( target[property] instanceof Object ) {
-			wrapObjectProperty(target, property);
 		} else {
 			wrapSimpleProperty(target, property);
 		}
 	}
 	
 	function wrapSimpleProperty(target, property) {
+		wrapObject(target[property]);
 		var observable = ko.observable(target[property]);
 		var getter = function() {
 			return observable();
 		};
 		var setter = function(value) {
+			knockwrap.wrapObject(value);
 			observable(value);
 		};
 		Object.defineProperty(target, property, {
@@ -49,10 +49,6 @@ knockwrap = function() {
 			enumerable: true
 		});
 	}
-	
-	function wrapObjectProperty(target, property) {
-		wrapObject(target[property]);
-	};
 	
 	function wrapGetter(target, property) {
 		var descriptor = Object.getOwnPropertyDescriptor(target, property);

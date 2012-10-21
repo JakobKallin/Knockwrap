@@ -34,20 +34,6 @@ describe('Knockwrap', function() {
 		expect(latestValue).toBe('Robert Smith');
 	});
 	
-	it('notifies changes to objects in arrays', function() {
-		var latestValue;
-		var viewModel = {
-			array: [ { name: 'James' } ],
-			get firstTitle() {
-				return latestValue = 'Mr. ' + this.array[0].name;
-			}
-		};
-		knockwrap.wrapObject(viewModel);
-		
-		viewModel.array[0].name = 'Robert';
-		expect(latestValue).toBe('Mr. Robert');
-	});
-	
 	it('notifies changes to objects inside objects', function() {
 		var latestValue;
 		var person = {
@@ -60,6 +46,43 @@ describe('Knockwrap', function() {
 		
 		person.name.first = 'Robert';
 		expect(latestValue).toBe('Robert Smith');
+	});
+	
+	it('only wraps values if they are objects', function() {
+		// These calls should throw exceptions.
+		knockwrap.wrapObject("James");
+		knockwrap.wrapObject(0);
+	});
+	
+	it('notifies changes to reassigned object properties', function() {
+		var latestValue;
+		
+		var person = {
+			name: { first: 'James', last: 'Smith' },
+			get fullName() {
+				return latestValue = this.name.first + ' ' + this.name.last;
+			}
+		};
+		knockwrap.wrapObject(person);
+		
+		person.name = { first: 'Robert', last: 'Johnson' };
+		expect(latestValue).toBe('Robert Johnson');
+	});
+});
+
+describe('Knockwrap array wrapping', function() {
+	it('notifies changes to objects in arrays', function() {
+		var latestValue;
+		var viewModel = {
+			array: [ { name: 'James' } ],
+			get firstTitle() {
+				return latestValue = 'Mr. ' + this.array[0].name;
+			}
+		};
+		knockwrap.wrapObject(viewModel);
+		
+		viewModel.array[0].name = 'Robert';
+		expect(latestValue).toBe('Mr. Robert');
 	});
 	
 	it('exposes objects added to arrays', function() {
@@ -185,13 +208,9 @@ describe('Knockwrap', function() {
 		var secondName = viewModel.array.slice(1)[0].name;
 		expect(secondName).toBe('Robert');
 	});
-	
-	it('only wraps values if they are objects', function() {
-		// These calls should throw exceptions.
-		knockwrap.wrapObject("James");
-		knockwrap.wrapObject(0);
-	});
-	
+});
+
+describe('Knockwrap observable copying', function() {
 	it('deeply copies simple properties', function() {
 		var person = { name: 'James' };
 		knockwrap.wrapObject(person);
@@ -258,7 +277,9 @@ describe('Knockwrap', function() {
 		expect(james.food.color).toBe('red');
 		expect(robert.food.color).toBe('green');
 	});
-	
+});
+
+describe('Knockwrap "this" reassignment', function() {
 	it('retains "this" keyword in wrapped functions', function() {
 		var james = {
 			name: 'James',
