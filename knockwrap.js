@@ -1,6 +1,6 @@
 knockwrap = function() {
 	function wrapObject(target) {
-		if ( target instanceof Object && !target.isKnockwrapped ) {
+		if ( shouldBeWrapped(target) ) {
 			for ( var property in target ) {
 				wrapProperty(target, property);
 			}
@@ -20,7 +20,23 @@ knockwrap = function() {
 		}
 	}
 	
+	function shouldBeWrapped(target) {
+		if ( target instanceof Object ) {
+			if ( target.hasOwnProperty('isKnockwrapped') ) {
+				return !target.isKnockwrapped;
+			} else {
+				return true;
+			}
+		} else {
+			false;
+		}
+	};
+	
 	function wrapProperty(target, property) {
+		if ( !target.hasOwnProperty(property) ) {
+			return;
+		}
+		
 		var descriptor = Object.getOwnPropertyDescriptor(target, property);
 		if ( descriptor.get ) {
 			wrapGetter(target, property);
@@ -158,64 +174,79 @@ knockwrap = function() {
 	function copyObject(original) {
 		var copy = {};
 		for ( var property in original ) {
-			var descriptor = Object.getOwnPropertyDescriptor(original, property);
-			// We need to check for .get because the property might be an array or object, and those are not wrapped.
-			var propertyIsGetter = descriptor.get && !descriptor.set;
-			
-			if ( propertyIsGetter ) {
-				var descriptor = Object.getOwnPropertyDescriptor(original, property);
-				Object.defineProperty(copy, property, {
-					// We use the original getter, which will be wrapped below.
-					get: descriptor.get.original,
-					configurable: true,
-					enumerable: true
-				});
-			} else if ( original[property] instanceof Function ) {
-				copy[property] = original[property].original;
-			} else if ( original[property] instanceof Array ) {
-				copy[property] = [];
-				original[property].map(function(originalValue) {
-					var copiedValue = copyValue(originalValue);
-					copy[property].push(copiedValue);
-				});
-			} else if ( original[property] instanceof Object ) {
-				copy[property] = copyObject(original[property]);
-			} else {
-				copy[property] = copyValue(original[property]);
-			}
+			copyProperty(original, property, copy);
 		};
 		
 		return copy;
 	}
 	
+	function copyProperty(original, property, copy) {
+		if ( !original.hasOwnProperty(property) ) {
+			return;
+		}
+		
+		var descriptor = Object.getOwnPropertyDescriptor(original, property);
+		// We need to check for .get because the property might be an array or object, and those are not wrapped.
+		var propertyIsGetter = descriptor.get && !descriptor.set;
+		
+		if ( propertyIsGetter ) {
+			var descriptor = Object.getOwnPropertyDescriptor(original, property);
+			Object.defineProperty(copy, property, {
+				// We use the original getter, which will be wrapped below.
+				get: descriptor.get.original,
+				configurable: true,
+				enumerable: true
+			});
+		} else if ( original[property] instanceof Function ) {
+			copy[property] = original[property].original;
+		} else if ( original[property] instanceof Array ) {
+			copy[property] = [];
+			original[property].map(function(originalValue) {
+				var copiedValue = copyValue(originalValue);
+				copy[property].push(copiedValue);
+			});
+		} else if ( original[property] instanceof Object ) {
+			copy[property] = copyObject(original[property]);
+		} else {
+			copy[property] = copyValue(original[property]);
+		}
+	}
+	
 	function copyObjectState(original) {
 		var copy = {};
-		
 		for ( var property in original ) {
-			var descriptor = Object.getOwnPropertyDescriptor(original, property);
-			if ( original[property] instanceof Array ) {
-				copy[property] = [];
-				original[property].map(function(value) {
-					if (value instanceof Object) {
-						copy[property].push(value.copyState());
-					} else {
-						copy[property].push(value);
-					}
-				});
-			} else if ( original[property] instanceof Function ) {
-				// Do nothing.
-			} else if ( original[property] instanceof Object ) {
-				copy[property] = original[property].copyState();
-			} else if ( descriptor.get && descriptor.set ) {
-				// Wrapped property.
-				copy[property] = original[property];
-			} else if ( !descriptor.get && !descriptor.set ) {
-				// Unwrapped property.
-				copy[property] = original[property];
-			}
+			copyPropertyState(original, property, copy);
 		}
 		
 		return copy;
+	}
+	
+	function copyPropertyState(original, property, copy) {
+		if ( !original.hasOwnProperty(property) ) {
+			return;
+		}
+		
+		var descriptor = Object.getOwnPropertyDescriptor(original, property);
+		if ( original[property] instanceof Array ) {
+			copy[property] = [];
+			original[property].map(function(value) {
+				if (value instanceof Object) {
+					copy[property].push(value.copyState());
+				} else {
+					copy[property].push(value);
+				}
+			});
+		} else if ( original[property] instanceof Function ) {
+			// Do nothing.
+		} else if ( original[property] instanceof Object ) {
+			copy[property] = original[property].copyState();
+		} else if ( descriptor.get && descriptor.set ) {
+			// Wrapped property.
+			copy[property] = original[property];
+		} else if ( !descriptor.get && !descriptor.set ) {
+			// Unwrapped property.
+			copy[property] = original[property];
+		}
 	}
 	
 	return {
