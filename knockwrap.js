@@ -2,8 +2,22 @@ knockwrap = function() {
 	function wrapObject(target) {
 		if ( shouldBeWrapped(target) ) {
 			for ( var property in target ) {
-				wrapProperty(target, property);
+				wrapPropertyOnAccess(target, property);
 			}
+			
+			// Since getters can change without being accessed, we need to trigger an access on them in order to enable dependency tracking.
+			// Note that this must be done after the properties have been processed in wrapPropertyOnAccess.
+			for ( var property in target ) {
+				if ( !target.hasOwnProperty(property) ) {
+					continue;
+				}
+				
+				var descriptor = Object.getOwnPropertyDescriptor(target, property);
+				if ( descriptor.get.activatesGetter ) {
+					target[property];
+				}
+			}
+			
 			Object.defineProperty(target, 'copy', {
 				value: function() {
 					return wrapCopyObject(this);
@@ -30,7 +44,64 @@ knockwrap = function() {
 		} else {
 			false;
 		}
-	};
+	}
+	
+	// Since we don't know which order the properties will be accessed in, some properties may be accessed before their dependencies have been wrapped.
+	// To prevent this from causing problems, we only wrap properties when they are first accessed, enabling a cascade of dependencies being wrapped.
+	function wrapPropertyOnAccess(target, property) {
+		if ( !target.hasOwnProperty(property) ) {
+			return;
+		}
+		
+		var descriptor = Object.getOwnPropertyDescriptor(target, property);
+		if ( descriptor.get ) {
+			wrapGetterOnAccess(target, property);
+		} else {
+			wrapNonGetterOnAccess(target, property);
+		}
+	}
+	
+	function wrapGetterOnAccess(target, property) {
+		var descriptor = Object.getOwnPropertyDescriptor(target, property);
+		
+		var activate = function() {
+			delete target[property];
+			Object.defineProperty(target, property, {
+				get: descriptor.get,
+				configurable: true
+			});
+			wrapProperty(target, property);
+			return target[property];
+		};
+		activate.activatesGetter = true;
+		
+		Object.defineProperty(target, property, {
+			get: activate
+		});
+	}
+	
+	function wrapNonGetterOnAccess(target, property) {
+		var activate = function(value) {
+			delete target[property];
+			target[property] = value;
+			wrapProperty(target, property);
+			return target[property];
+		};
+		
+		var originalValue = target[property];
+		
+		// In the wrappers below, it is important to actually return the values.
+		Object.defineProperty(target, property, {
+			get: function() {
+				return activate(originalValue);
+			},
+			// A property might be assigned to before being evaluated, so create a setter as well.
+			// Note that the value being assigned, not the original value, is passed along to the activation function.
+			set: function(value) {
+				return activate(value);
+			}
+		});
+	}
 	
 	function wrapProperty(target, property) {
 		if ( !target.hasOwnProperty(property) ) {

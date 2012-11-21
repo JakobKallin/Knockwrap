@@ -80,11 +80,27 @@ describe('Knockwrap', function() {
 		viewModel.person = {
 			name: 'James',
 			get title() {
-				console.log(this);
 				return latestValue = 'Mr. ' + this.name;
 			}
 		};
 		expect(latestValue).toBe('Mr. James');
+	});
+	
+	it('notifies changes to properties referenced before being declared', function() {
+		var viewModel = {
+			person: {
+				get isSelected() {
+					return this === viewModel.current;
+				}
+			},
+			current: null
+		};
+		knockwrap.wrap(viewModel);
+		
+		expect(viewModel.person.isSelected).toBe(false);
+		
+		viewModel.current = viewModel.person;
+		expect(viewModel.person.isSelected).toBe(true);
 	});
 });
 
