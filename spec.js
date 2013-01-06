@@ -443,6 +443,19 @@ describe('Knockwrap state copying', function() {
 		
 		expect('name' in copy).toBe(false);
 	});
+
+	// Arrays are a special case, so make sure that array getters are ignored like other getters.
+	it('does not copy array getters', function() {
+		var james = {
+				get names() {
+					return ['James', 'Jim'];
+				}
+		};
+		knockwrap.wrap(james);
+		var copy = james.copyState();
+		
+		expect('names' in copy).toBe(false);
+	});
 	
 	it('does not copy functions', function() {
 		var james = {
